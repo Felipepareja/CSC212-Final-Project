@@ -6,4 +6,4 @@ Must implement:
 
 ## Possible errors and how to deal with them
 
-##Possible improvements
+## Possible improvements
