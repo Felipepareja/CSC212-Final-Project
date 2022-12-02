@@ -1,4 +1,4 @@
-### Final Project for CSC 212 - Focus: B-Three
+### Final Project for CSC 212 - Focus: B-Tree
 Must implement:
 
 
