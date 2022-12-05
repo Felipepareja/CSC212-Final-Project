@@ -2,7 +2,8 @@
 
 Group Members: David Motta, Felipe Pareja, Quinn Smith
 
-Must implement:
+**Implementation:** 
+In this project we use have created a chess AI using the Minimax Algorithm + Alpha-beta Pruning.
 
 
 
@@ -32,6 +33,3 @@ If you wanted to move Pawn E2 to E4
 ex. E2-E4
 
 
-## Possible errors and how to deal with them
-
-## Possible improvements
