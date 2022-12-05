@@ -9,7 +9,7 @@ Must implement:
 Files needed: board.cpp, tree.cpp, board.h, tree.h, and main.cpp
 
 Compile with following commands:
-g++ board.cpp tree.cpp main.cpp -o main
+'g++ board.cpp tree.cpp main.cpp -o main'
 
 
 
