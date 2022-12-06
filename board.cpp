@@ -1,11 +1,9 @@
 #include "board.h"
 #include "tree.h"
 
-//#include <iostream>
-
+//global variables
 char board[8][8];
-
-
+int depth = 3;
 
 
 Board::Board(){
@@ -59,12 +57,12 @@ std::string pieceConversion(char c){
         case 'Q': r = "\033[31mQ" ;break;
         case 'K': r = "\033[31mK" ;break;
         case 'P': r = "\033[31mo" ;break;
-        case 'r': r = "\033[37mR" ;break;
-        case 'n': r = "\033[37mN" ;break;
-        case 'b': r = "\033[37mB" ;break;
-        case 'q': r = "\033[37mQ" ;break;
-        case 'k': r = "\033[37mK" ;break;
-        case 'p': r = "\033[37mo" ;break;
+        case 'r': r = "\033[32mR" ;break;
+        case 'n': r = "\033[32mN" ;break;
+        case 'b': r = "\033[32mB" ;break;
+        case 'q': r = "\033[32mQ" ;break;
+        case 'k': r = "\033[32mK" ;break;
+        case 'p': r = "\033[32mo" ;break;
     }
     return r;
 }
@@ -118,55 +116,24 @@ void Board::black_moves(){
     //Position pos;
 
 
+    depth = 3;
+    int color = 0;
+    std::vector<int> tempVec = {0,0,0,0,0};
+
+    Node *treeRoot = new Node(tempVec);
     
-    std::vector<std::vector<int>> moves = find_all_moves();
-    //move every single move based on depth number, prolly 2. 
+    treeRoot->find_all_moves(treeRoot, color);
+    //move every single move based on depth number 
     //add it as a node.
     //then add nodes to that node.
 
-    //replace something to be recursive eventually
-    
-    Tree moveTree;
-
-    for(int i = 0; i < moves.size(); i++){
-        Node * node = new Node(moves[i]);
-        moveTree.insert(node);
-    }
-
-    int maxScore = -1000;
-    int maxIndex = rand() % moves.size();
-
-    moveTree.print();
-
-    std::vector<int> bestMove = moveTree.get_best_move();
+    //Chooses the move to make, and makes it.
+    std::vector<int> bestMove = treeRoot->choose_good_move(treeRoot);
     board[bestMove[2]][bestMove[3]] = board[bestMove[0]][bestMove[1]];
     board[bestMove[0]][bestMove[1]] = 0;
-    //std::cout << "Node: " << moveTree.root;
-    //moveTree.print();
-    /*
-    int randoMove = rand() % moves.size();
-    board[moves[randoMove][2]][moves[randoMove][3]] = board[moves[randoMove][0]][moves[randoMove][1]];
-    board[moves[randoMove][0]][moves[randoMove][1]] = 0;
-    */
 }
 
-//gets all possible moves for a piece at a position
-std::string Board::get_moves(int row, int col){
-    char piece = board[row][col];
-    std::cout << "the piece: " << piece;
-    piece = tolower(piece);
-    std::cout << "the new piece: " << piece << "\n";
-
-    switch(piece){
-        case 'P':
-            if(board[col+1][row] == 'O'){
-                
-            }
-            ;break;
-    }
-    return "yes";
-}
-
+// Prints a visual of the board
 void Board::print_board(){
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
@@ -183,6 +150,7 @@ void Board::print_board(){
     }
 }
 
+//Checks if there is nothing on a square
 bool is_free(int row, int col){
     if(row < 0 || row > 7 || col < 0 || col > 7){
         return false;
@@ -192,42 +160,48 @@ bool is_free(int row, int col){
     }
     return false;
 }
-
-bool is_takeable(int row, int col){
+//checks if there is an enemy piece on a square
+bool is_takeable(int row, int col,int color){
     if(row < 0 || row > 7 || col < 0 || col > 7){
         return false;
     }
     char space = board[row][col];
-    if(space == 0 || space == 'p' || space == 'r' || space == 'n' || space == 'b' || space == 'q' || space == 'k'){
-        return true;
+    if(color == 0){
+        if(space == 0 || space == 'p' || space == 'r' || space == 'n' || space == 'b' || space == 'q' || space == 'k'){
+            return true;
+        }
+    }
+    if(color == 1){
+        if(space == 0 || space == 'P' || space == 'R' || space == 'B' || space == 'K' || space == 'N' || space == 'Q'){
+            return true;
+        }
     }
     return false;
 }
 
 
-
-
-Position::Position(){
-
-}
-int pos_eval(char piece){
+int pos_eval(char piece, int color){
+    int val = 0;
     switch(piece){
-        case 'r': return -5;
-        case 'n': return -3;
-        case 'b': return -3;
-        case 'q': return -9;
-        case 'k': return -50;
-        case 'p': return -1;
-        case 'P': return 1;
-        case 'R': return 5;
-        case 'N': return 3;
-        case 'B': return 3;
-        case 'Q': return 9;
-        case 'K': return 50;
+        case 'r': val = -5 ;break;
+        case 'n': val = -3;break;
+        case 'b': val = -3;break;
+        case 'q': val = -9;break;
+        case 'k': val = -50;break;
+        case 'p': val = -1;break;
+        case 'P': val = 1;break;
+        case 'R': val = 5;break;
+        case 'N': val = 3;break;
+        case 'B': val = 3;break;
+        case 'Q': val = 9;break;
+        case 'K': val = 50;break;
     }
-    return 0;
+    if(color == 1){
+        return val;
+    }
+    return val;
 }
-std::vector<int> add_position(int x, int y, int xx, int yy){
+Node* Node::add_position(int x, int y, int xx, int yy, int color){
     std::vector<int> temp;
 
     char car = board[xx][yy];
@@ -236,26 +210,39 @@ std::vector<int> add_position(int x, int y, int xx, int yy){
     int score = 0;
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
-            score += pos_eval(board[i][j]);
+            score += pos_eval(board[i][j],color);
         }
     }
     temp.push_back(x);
     temp.push_back(y);
     temp.push_back(xx);
     temp.push_back(yy);
-    
     temp.push_back(score);
+
+    depth -= 1;
+    Node * node = new Node(temp);
+    
+    if(depth >= 0){
+        find_all_moves(node,!color);
+        
+        std::vector<int> best_move = get_best_move(node,!color);
+        node->score = best_move[4];
+    }
+    depth += 1;
 
     board[x][y] = board[xx][yy];
     board[xx][yy] = car;
 
-    return temp;
+
+    return node;
 }
 
-std::vector<std::vector<int>> Board::find_all_moves(){
-    //positional score:
+void Node::find_all_moves(Node* node, int color){
 
-    //std::cout << "Score: " << score << "\n";
+    //If we are calculating whites potential next moves, color = 1
+    //color = 0 when we calculate blacks moves
+
+    
     //Generate nodes for each possible move, store them in vector
     std::vector<std::vector<int>> moves;
 
@@ -264,21 +251,43 @@ std::vector<std::vector<int>> Board::find_all_moves(){
             if(board[i][j] != 0){
                 switch(board[i][j]){
                     case 'P':
+                        if(color == 1) break;
+
                         if(is_free(i+1,j)){
-                            //std::vector<int> temp = ;
-                            moves.push_back(add_position(i,j,i+1,j));
+                            node->insert(add_position(i,j,i+1,j,color));
                         }
-                        if(!is_free(i+1,j+1) && is_takeable(i+1,j+1)){
-                            moves.push_back(add_position(i,j,i+1,j+1));
+                        if(is_free(i+2,j) && is_free(i+1,j) && i==1){
+                            node->insert(add_position(i,j,i+2,j,color));
                         }
-                        if(!is_free(i+1,j-1) && is_takeable(i+1,j-1)){
-                            moves.push_back(add_position(i,j,i+1,j-1));
+                        if(!is_free(i+1,j+1) && is_takeable(i+1,j+1,color)){
+                            node->insert(add_position(i,j,i+1,j+1,color));
+                        }
+                        if(!is_free(i+1,j-1) && is_takeable(i+1,j-1,color)){
+                            node->insert(add_position(i,j,i+1,j-1,color));
                         }
                         break;
+                    case 'p':
+                        if(color == 0) break;
+
+                        if(is_free(i-1,j)){
+                            node->insert(add_position(i,j,i-1,j,color));
+                        }
+                        if(is_free(i-2,j) && is_free(i-1,j) && i == 6){
+                            node->insert(add_position(i,j,i-2,j,color));
+                        }
+                        if(!is_free(i-1,j+1) && is_takeable(i-1,j+1,color)){
+                            node->insert(add_position(i,j,i-1,j+1,color));
+                        }
+                        if(!is_free(i-1,j-1) && is_takeable(i-1,j-1,color)){
+                            node->insert(add_position(i,j,i-1,j-1,color));
+                        }
+                        break;
+                    case 'r': if(color == 0) break;
                     case 'R': //ROOK MOVES
+                            if(color == 1 && board[i][j] == 'R') break;
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j)){
-                                moves.push_back(add_position(i,j,i+dis,j));
+                            if(is_takeable(i+dis,j,color)){
+                                node->insert(add_position(i,j,i+dis,j,color));
                                 if(!is_free(i+dis,j)){
                                     break;
                                 }
@@ -288,8 +297,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j)){
-                                moves.push_back(add_position(i,j,i-dis,j));
+                            if(is_takeable(i-dis,j,color)){
+                                node->insert(add_position(i,j,i-dis,j,color));
                                 if(!is_free(i-dis,j)){
                                     break;
                                 }
@@ -299,8 +308,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i,j-dis)){
-                                moves.push_back(add_position(i,j,i,j-dis));
+                            if(is_takeable(i,j-dis,color)){
+                                node->insert(add_position(i,j,i,j-dis,color));
                                 if(!is_free(i,j-dis)){
                                     break;
                                 }
@@ -310,8 +319,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i,j+dis)){
-                                moves.push_back(add_position(i,j,i,j+dis));
+                            if(is_takeable(i,j+dis,color)){
+                                node->insert(add_position(i,j,i,j+dis,color));
                                 if(!is_free(i,j+dis)){
                                     break;
                                 }
@@ -321,10 +330,12 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         ;break;
+                    case 'b': if(color == 0) break;
                     case 'B':
+                        if(color == 1 && board[i][j] == 'B') break;
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j+dis)){
-                                moves.push_back(add_position(i,j,i+dis,j+dis));
+                            if(is_takeable(i+dis,j+dis,color)){
+                                node->insert(add_position(i,j,i+dis,j+dis,color));
                                 if(!is_free(i+dis,j+dis)){
                                     break;
                                 }
@@ -334,8 +345,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j+dis)){
-                                moves.push_back(add_position(i,j,i-dis,j+dis));
+                            if(is_takeable(i-dis,j+dis,color)){
+                                node->insert(add_position(i,j,i-dis,j+dis,color));
                                 if(!is_free(i-dis,j+dis)){
                                     break;
                                 }
@@ -345,8 +356,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j-dis)){
-                                moves.push_back(add_position(i,j,i+dis,j-dis));
+                            if(is_takeable(i+dis,j-dis,color)){
+                                node->insert(add_position(i,j,i+dis,j-dis,color));
                                 if(!is_free(i+dis,j-dis)){
                                     break;
                                 }
@@ -356,8 +367,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j-dis)){
-                                moves.push_back(add_position(i,j,i-dis,j-dis));
+                            if(is_takeable(i-dis,j-dis,color)){
+                                node->insert(add_position(i,j,i-dis,j-dis,color));
                                 if(!is_free(i-dis,j-dis)){
                                     break;
                                 }
@@ -367,10 +378,12 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         ;break;
+                    case 'q': if(color == 0) break;
                     case 'Q':
+                        if(color == 1 && board[i][j] == 'Q') break;
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j+dis)){
-                                moves.push_back(add_position(i,j,i+dis,j+dis));
+                            if(is_takeable(i+dis,j+dis,color)){
+                                node->insert(add_position(i,j,i+dis,j+dis,color));
                                 if(!is_free(i+dis,j+dis)){
                                     break;
                                 }
@@ -380,8 +393,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j+dis)){
-                                moves.push_back(add_position(i,j,i-dis,j+dis));
+                            if(is_takeable(i-dis,j+dis,color)){
+                                node->insert(add_position(i,j,i-dis,j+dis,color));
                                 if(!is_free(i-dis,j+dis)){
                                     break;
                                 }
@@ -391,8 +404,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j-dis)){
-                                moves.push_back(add_position(i,j,i+dis,j-dis));
+                            if(is_takeable(i+dis,j-dis,color)){
+                                node->insert(add_position(i,j,i+dis,j-dis,color));
                                 if(!is_free(i+dis,j-dis)){
                                     break;
                                 }
@@ -402,8 +415,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j-dis)){
-                                moves.push_back(add_position(i,j,i-dis,j-dis));
+                            if(is_takeable(i-dis,j-dis,color)){
+                                node->insert(add_position(i,j,i-dis,j-dis,color));
                                 if(!is_free(i-dis,j-dis)){
                                     break;
                                 }
@@ -414,8 +427,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                         }
                         //STRAIGHTS
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i+dis,j)){
-                                moves.push_back(add_position(i,j,i+dis,j));
+                            if(is_takeable(i+dis,j,color)){
+                                node->insert(add_position(i,j,i+dis,j,color));
                                 if(!is_free(i+dis,j)){
                                     break;
                                 }
@@ -425,8 +438,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i-dis,j)){
-                                moves.push_back(add_position(i,j,i-dis,j));
+                            if(is_takeable(i-dis,j,color)){
+                                node->insert(add_position(i,j,i-dis,j,color));
                                 if(!is_free(i-dis,j)){
                                     break;
                                 }
@@ -436,8 +449,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i,j-dis)){
-                                moves.push_back(add_position(i,j,i,j-dis));
+                            if(is_takeable(i,j-dis,color)){
+                                node->insert(add_position(i,j,i,j-dis,color));
                                 if(!is_free(i,j-dis)){
                                     break;
                                 }
@@ -447,8 +460,8 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         for(int dis = 1; dis < 8; dis++){
-                            if(is_takeable(i,j+dis)){
-                                moves.push_back(add_position(i,j,i,j+dis));
+                            if(is_takeable(i,j+dis,color)){
+                                node->insert(add_position(i,j,i,j+dis,color));
                                 if(!is_free(i,j+dis)){
                                     break;
                                 }
@@ -458,51 +471,129 @@ std::vector<std::vector<int>> Board::find_all_moves(){
                             }
                         }
                         ;break;
+                    case 'n': if(color == 0) break;
                     case 'N':
-                        if(is_takeable(i-2,j-1)){
-                            moves.push_back(add_position(i,j,i-2,j-1));
+                        if(color == 1 && board[i][j] == 'N') break;
+                        if(is_takeable(i-2,j-1,color)){
+                            node->insert(add_position(i,j,i-2,j-1,color));
                         }
-                        if(is_takeable(i-1,j-2)){
-                            moves.push_back(add_position(i,j,i-1,j-2));
+                        if(is_takeable(i-1,j-2,color)){
+                            node->insert(add_position(i,j,i-1,j-2,color));
                         }
-                        if(is_takeable(i+1,j-2)){
-                            moves.push_back(add_position(i,j,i+1,j-2));
+                        if(is_takeable(i+1,j-2,color)){
+                            node->insert(add_position(i,j,i+1,j-2,color));
                         }
-                        if(is_takeable(i+2,j-1)){
-                            moves.push_back(add_position(i,j,i+2,j-1));
+                        if(is_takeable(i+2,j-1,color)){
+                            node->insert(add_position(i,j,i+2,j-1,color));
                         }
-                        if(is_takeable(i+2,j+1)){
-                            moves.push_back(add_position(i,j,i+2,j+1));
+                        if(is_takeable(i+2,j+1,color)){
+                            node->insert(add_position(i,j,i+2,j+1,color));
                         }
-                        if(is_takeable(i+1,j+2)){
-                            moves.push_back(add_position(i,j,i+1,j+2));
+                        if(is_takeable(i+1,j+2,color)){
+                            node->insert(add_position(i,j,i+1,j+2,color));
                         }
-                        if(is_takeable(i-1,j+2)){
-                            moves.push_back(add_position(i,j,i-1,j+2));
+                        if(is_takeable(i-1,j+2,color)){
+                            node->insert(add_position(i,j,i-1,j+2,color));
                         }
-                        if(is_takeable(i-2,j+1)){
-                            moves.push_back(add_position(i,j,i-2,j+1));
+                        if(is_takeable(i-2,j+1,color)){
+                            node->insert(add_position(i,j,i-2,j+1,color));
                         }
                         ;break;
+                    case 'k': if(color == 0) break;
                     case 'K':
-
-                        break;
+                        if(color == 1 && board[i][j] == 'K') break;
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i+dis,j+dis,color)){
+                                node->insert(add_position(i,j,i+dis,j+dis,color));
+                                if(!is_free(i+dis,j+dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i-dis,j+dis,color)){
+                                node->insert(add_position(i,j,i-dis,j+dis,color));
+                                if(!is_free(i-dis,j+dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i+dis,j-dis,color)){
+                                node->insert(add_position(i,j,i+dis,j-dis,color));
+                                if(!is_free(i+dis,j-dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i-dis,j-dis,color)){
+                                node->insert(add_position(i,j,i-dis,j-dis,color));
+                                if(!is_free(i-dis,j-dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        //STRAIGHTS
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i+dis,j,color)){
+                                node->insert(add_position(i,j,i+dis,j,color));
+                                if(!is_free(i+dis,j)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i-dis,j,color)){
+                                node->insert(add_position(i,j,i-dis,j,color));
+                                if(!is_free(i-dis,j)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i,j-dis,color)){
+                                node->insert(add_position(i,j,i,j-dis,color));
+                                if(!is_free(i,j-dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        for(int dis = 1; dis < 2; dis++){
+                            if(is_takeable(i,j+dis,color)){
+                                node->insert(add_position(i,j,i,j+dis,color));
+                                if(!is_free(i,j+dis)){
+                                    break;
+                                }
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        ;break;
                 }
             }
         }
     }
-    /*
-    for(int i = 0; i < moves.size(); i++){
-    for(int j = 0; j < moves[i].size(); j ++){
-        std::cout << moves[i][j] << " ";
-    }
-    std::cout << "\n";
-    }
-    */
-    return moves;
-
-    //int randoMove = rand() % moves.size();
-    //board[moves[randoMove][2]][moves[randoMove][3]] = board[moves[randoMove][0]][moves[randoMove][1]];
-    //board[moves[randoMove][0]][moves[randoMove][1]] = 0;
-    //char temp = board[moves[randoMove][0]][moves[randoMove][1]]
 }
