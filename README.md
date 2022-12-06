@@ -30,8 +30,12 @@ You will be White and have the first move! Enter without spaces the Letter and n
 
 If you wanted to move Pawn E2 to E4
 
-**To Quit**
-
 ex. E2-E4
+
+**To Quit:**
+
+Enter lowercase quit
+
+
 
 
