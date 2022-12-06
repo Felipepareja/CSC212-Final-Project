@@ -3,7 +3,7 @@
 Group Members: David Motta, Felipe Pareja, Quinn Smith
 
 **Implementation:** 
-In this project we use have created a chess AI using the Minimax Algorithm + Alpha-beta Pruning.
+In this project we use have created a chess AI using the Minimax Algorithm.
 
 
 
@@ -29,6 +29,8 @@ You will be White and have the first move! Enter without spaces the Letter and n
 **example:**
 
 If you wanted to move Pawn E2 to E4
+
+**To Quit**
 
 ex. E2-E4
 
